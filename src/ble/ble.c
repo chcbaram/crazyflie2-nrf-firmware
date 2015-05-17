@@ -35,8 +35,10 @@
 #include "timeslot.h"
 
 #include "bitcraze_uuids.h"
-
 #include "ble_crazyflies.h"
+
+#include "skyrover_uuids.h"
+#include "ble_skyrover.h"
 
 
 #if BLE
@@ -44,6 +46,11 @@
 #error S110 shall be used when using BLE
 #endif
 #endif
+
+
+#define BLE_UUID_SKYROVER_SERVICE			0xFFE0
+
+
 
 #define DEVICE_NAME                          "Crazyflie"                              /**< Name of device. Will be included in the advertising data. */
 #define MANUFACTURER_NAME                    "Bitcraze"                     /**< Manufacturer. Will be passed to Device Information Service. */
@@ -204,7 +211,7 @@ static void advertising_init(void)
     ble_uuid_t adv_uuids[] =
     {
         //{BLE_UUID_HEART_RATE_SERVICE,         BLE_UUID_TYPE_BLE},
-        //{BLE_UUID_BATTERY_SERVICE,            BLE_UUID_TYPE_BLE},
+        //{BLE_UUID_SKYROVER_SERVICE,           BLE_UUID_TYPE_BLE},
         {BLE_UUID_DEVICE_INFORMATION_SERVICE, BLE_UUID_TYPE_BLE}
     };
 
@@ -263,6 +270,38 @@ static void services_init(void)
 
     err_code = ble_dis_init(&dis_init);
     APP_ERROR_CHECK(err_code);
+}
+
+
+static void services_skyrover_init(void)
+{
+    uint32_t       err_code;
+    ble_dis_init_t dis_init;
+    uint8_t skyroverUuidType;
+
+    const ble_uuid128_t base_uuid128 =
+      {
+         { UUID_SKYROVER_BASE }
+      };
+
+    // Initialize Bitcraze services
+    err_code = sd_ble_uuid_vs_add(&base_uuid128, &skyroverUuidType);
+    APP_ERROR_CHECK(err_code);
+
+    ble_skyrover_init(skyroverUuidType);
+
+
+    // Initialize Device Information Service
+    memset(&dis_init, 0, sizeof(dis_init));
+
+    ble_srv_ascii_to_utf8(&dis_init.manufact_name_str, MANUFACTURER_NAME);
+
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&dis_init.dis_attr_md.read_perm);
+    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&dis_init.dis_attr_md.write_perm);
+
+    err_code = ble_dis_init(&dis_init);
+    APP_ERROR_CHECK(err_code);
+
 }
 
 
@@ -411,7 +450,11 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
  */
 static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
 {
+#ifdef SKYROVER
+	ble_skyrover_on_ble_evt(p_ble_evt);
+#else
     ble_crazyflies_on_ble_evt(p_ble_evt);
+#endif
     ble_conn_params_on_ble_evt(p_ble_evt);
     on_ble_evt(p_ble_evt);
 }
@@ -446,7 +489,11 @@ int ble_init(void)
     // Initialize Bluetooth Stack parameters
     gap_params_init();
     advertising_init();
+#ifdef SKYROVER
+    services_skyrover_init();
+#else
     services_init();
+#endif
     conn_params_init();
     sec_params_init();
 

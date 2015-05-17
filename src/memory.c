@@ -77,8 +77,6 @@ int owScan()
 {
   int nMem = 0;
 
-
-
   owTouchReset(0);
 
   msDelay(10);

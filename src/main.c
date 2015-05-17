@@ -189,13 +189,26 @@ void mainloop()
   {
 
 #ifdef BLE
-    if ((esbReceived == false) && bleCrazyfliesIsPacketReceived()) {
+
+#ifdef SKYROVER
+	  if ((esbReceived == false) && bleSkyRoverIsPacketReceived())
+	  {
+		  EsbPacket* packet = bleSkyRoverGetRxPacket();
+		  memcpy(esbRxPacket.data, packet->data, packet->size);
+		  esbRxPacket.size = packet->size;
+		  esbReceived = true;
+		  bleSkyRoverReleaseRxPacket(packet);
+	  }
+
+#else
+	  if ((esbReceived == false) && bleCrazyfliesIsPacketReceived()) {
       EsbPacket* packet = bleCrazyfliesGetRxPacket();
       memcpy(esbRxPacket.data, packet->data, packet->size);
       esbRxPacket.size = packet->size;
       esbReceived = true;
       bleCrazyfliesReleaseRxPacket(packet);
     }
+#endif
 
 #endif
 #ifndef CONT_WAVE_TEST
@@ -252,12 +265,15 @@ void mainloop()
             }
 
 #ifdef BLE
+#ifdef SKYROVER
+#else
             {
               static EsbPacket pk;
               memcpy(pk.data,  slRxPacket.data, slRxPacket.length);
               pk.size = slRxPacket.length;
               bleCrazyfliesSendPacket(&pk);
             }
+#endif
 #endif
 
             bzero(slRxPacket.data, SYSLINK_MTU);

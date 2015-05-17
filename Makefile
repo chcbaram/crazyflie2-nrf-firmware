@@ -26,7 +26,7 @@ NRF_S110 ?= s110
 
 INCLUDES= -I Include -I Include/gcc -Iinterface
 
-PERSONAL_DEFINES ?= 
+PERSONAL_DEFINES ?= #-DSKYROVER
 
 PROCESSOR = -mcpu=cortex-m0 -mthumb
 NRF= -DNRF51
@@ -54,7 +54,10 @@ CFLAGS += -DBLE=1
 
 OBJS += src/ble/ble.o
 OBJS += src/ble/ble_crazyflies.o
+OBJS += src/ble/ble_skyrover.o
 OBJS += src/ble/timeslot.o
+OBJS += src/ble/MSP_Cmd.o
+
 
 OBJS += $(NRF51_SDK)/Source/ble/ble_advdata.o
 OBJS += $(NRF51_SDK)/Source/ble/ble_conn_params.o
